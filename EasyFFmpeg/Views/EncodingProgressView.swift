@@ -8,6 +8,7 @@ struct EncodingProgressView: View {
     let onCancel: () -> Void
     let isDone: Bool
     let error: String?
+    let completionStats: CompletionStats?
     let onReveal: () -> Void
     let onReset: () -> Void
 
@@ -58,7 +59,7 @@ struct EncodingProgressView: View {
                     .monospacedDigit()
                 Spacer()
                 if let eta = progress?.eta {
-                    Text("~\(eta.formattedDuration) осталось")
+                    Text("~\(eta.formattedDuration) " + (langMgr.language == .english ? "left" : "осталось"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
@@ -81,7 +82,7 @@ struct EncodingProgressView: View {
         } else {
             HStack(spacing: 6) {
                 ProgressView().scaleEffect(0.7)
-                Text("Запуск…").font(.caption).foregroundStyle(.secondary)
+                Text(langMgr.language == .english ? "Starting…" : "Запуск…").font(.caption).foregroundStyle(.secondary)
             }
         }
 
@@ -93,10 +94,64 @@ struct EncodingProgressView: View {
 
     @ViewBuilder
     private var doneView: some View {
-        Image(systemName: "checkmark.circle.fill")
-            .font(.system(size: 38))
-            .foregroundStyle(.green)
-        Text(t(.encodingComplete)).font(.headline)
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 28))
+                .foregroundStyle(.green)
+            Text(t(.encodingComplete)).font(.headline)
+        }
+
+        // Completion stats grid
+        if let stats = completionStats {
+            HStack(spacing: 0) {
+                statCell(
+                    icon: "clock.fill",
+                    label: langMgr.language == .english ? "Time" : "Время",
+                    value: stats.formattedElapsed,
+                    color: .blue
+                )
+                Divider().frame(height: 36)
+                statCell(
+                    icon: "arrow.down.circle.fill",
+                    label: langMgr.language == .english ? "Saved" : "Сэкономлено",
+                    value: "\(stats.savedPercent)%",
+                    color: .green
+                )
+                Divider().frame(height: 36)
+                statCell(
+                    icon: "internaldrive",
+                    label: langMgr.language == .english ? "Result" : "Результат",
+                    value: stats.formattedOutput,
+                    color: .primary
+                )
+            }
+            .background(Color.secondary.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            // Size comparison bar
+            GeometryReader { geo in
+                let ratio = min(Double(stats.outputBytes) / Double(max(stats.inputBytes, 1)), 1.0)
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.12))
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.green)
+                        .frame(width: geo.size.width * ratio, height: 6)
+                }
+            }
+            .frame(height: 6)
+
+            HStack {
+                Text(stats.formattedInput)
+                    .font(.caption2).foregroundStyle(.secondary)
+                Spacer()
+                Text("→ \(stats.formattedOutput)")
+                    .font(.caption2).fontWeight(.medium)
+                    .foregroundStyle(.green)
+            }
+        }
+
         HStack(spacing: 10) {
             Button(t(.showInFinder), action: onReveal)
                 .buttonStyle(.borderedProminent)
@@ -116,9 +171,10 @@ struct EncodingProgressView: View {
     }
 
     @ViewBuilder
-    private func statCell(icon: String, label: String, value: String) -> some View {
+    private func statCell(icon: String, label: String, value: String,
+                          color: Color = .secondary) -> some View {
         VStack(spacing: 2) {
-            Image(systemName: icon).font(.caption2).foregroundStyle(.secondary)
+            Image(systemName: icon).font(.caption2).foregroundStyle(color)
             Text(value).font(.caption).fontWeight(.medium).monospacedDigit().lineLimit(1)
             Text(label).font(.caption2).foregroundStyle(.secondary)
         }

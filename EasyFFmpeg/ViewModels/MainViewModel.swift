@@ -19,6 +19,9 @@ class MainViewModel: ObservableObject {
     @Published var encodingError: String?
     @Published var encodingDone = false
     @Published var outputFileURL: URL?
+    @Published var completionStats: CompletionStats?
+
+    private var encodingStartTime: Date?
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -72,7 +75,9 @@ class MainViewModel: ObservableObject {
         let outURL = folder.appendingPathComponent("\(outputFileName).\(ext)")
         outputFileURL = outURL
 
-        isEncoding = true; encodingError = nil; encodingDone = false; encodingProgress = nil
+        isEncoding = true; encodingError = nil; encodingDone = false
+        encodingProgress = nil; completionStats = nil
+        encodingStartTime = Date()
 
         Task {
             do {
@@ -82,6 +87,18 @@ class MainViewModel: ObservableObject {
                     onProgress: { [weak self] prog in self?.encodingProgress = prog }
                 )
                 self.encodingDone = true
+                // Compute completion stats
+                let elapsed = self.encodingStartTime.map { Date().timeIntervalSince($0) } ?? 0
+                let inputSize  = self.metadata?.fileSize ?? 0
+                let outputSize = (try? outURL.resourceValues(forKeys: [.fileSizeKey]).fileSize)
+                                     .map(Int64.init) ?? 0
+                if inputSize > 0 && outputSize > 0 {
+                    self.completionStats = CompletionStats(
+                        elapsedSeconds: elapsed,
+                        inputBytes: inputSize,
+                        outputBytes: outputSize
+                    )
+                }
             } catch AppError.cancelled {
                 // no message
             } catch {
@@ -108,6 +125,6 @@ class MainViewModel: ObservableObject {
 
     func resetFile() {
         selectedFileURL = nil; metadata = nil; estimation = nil
-        encodingDone = false; encodingError = nil; encodingProgress = nil
+        encodingDone = false; encodingError = nil; encodingProgress = nil; completionStats = nil
     }
 }

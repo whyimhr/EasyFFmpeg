@@ -77,6 +77,7 @@ struct SingleFileView: View {
                                             onCancel: { vm.cancelEncoding() },
                                             isDone: vm.encodingDone,
                                             error: vm.encodingError,
+                                            completionStats: vm.completionStats,
                                             onReveal: { vm.revealInFinder() },
                                             onReset: {
                                                 vm.encodingDone = false

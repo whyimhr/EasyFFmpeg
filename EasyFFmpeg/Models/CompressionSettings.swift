@@ -87,11 +87,17 @@ struct CompressionSettings {
             let svtPreset = svtAV1Preset(from: encoderPreset)
             args += ["-crf", "\(crf)", "-preset", "\(svtPreset)"]
 
-        case .h264, .h265:
+        case .h265:
             args += ["-crf", "\(crf)", "-preset", encoderPreset.rawValue]
-            if let tune = tune {
-                args += ["-tune", tune]
+            if let tune = tune { args += ["-tune", tune] }
+            // hvc1 tag required for QuickTime / Apple ecosystem compatibility
+            if outputPath.hasSuffix(".mp4") || outputPath.hasSuffix(".mov") {
+                args += ["-tag:v", "hvc1"]
             }
+
+        case .h264:
+            args += ["-crf", "\(crf)", "-preset", encoderPreset.rawValue]
+            if let tune = tune { args += ["-tune", tune] }
         }
 
         // Audio
