@@ -1,0 +1,27 @@
+name: Build Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build EasyFFmpeg
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build with xcodebuild
+        run: |
+          set -o pipefail
+          xcodebuild clean build \
+            -project EasyFFmpeg.xcodeproj \
+            -scheme EasyFFmpeg \
+            -destination 'platform=macOS' \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
