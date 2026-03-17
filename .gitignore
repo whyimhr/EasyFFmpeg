@@ -4,6 +4,7 @@
 # Xcode
 DerivedData/
 build/
+.build/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
 xcuserdata/
@@ -23,14 +24,14 @@ Package.resolved
 # Archives
 *.xcarchive
 
-# App bundles (не храним в репозитории)
+# App bundles
 *.app
 *.dmg
 
-# Optional: если используешь CocoaPods
+#
 Pods/
 
-# Optional: fastlane
+#
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/
