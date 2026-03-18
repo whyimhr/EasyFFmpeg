@@ -220,9 +220,9 @@ struct ManualSettingsInner: View {
                 }
             }
             .labelsHidden()
-            .onChange(of: settings.audioCodec) { _ in
-                if settings.audioCodec.defaultBitrate > 0 {
-                    settings.audioBitrate = settings.audioCodec.defaultBitrate
+            .onChange(of: settings.audioCodec) { _, newValue in
+                if newValue.defaultBitrate > 0 {
+                    settings.audioBitrate = newValue.defaultBitrate
                 }
             }
             if settings.audioCodec.hasBitrate {

@@ -119,22 +119,26 @@ class FFmpegRunner: ObservableObject {
             process.terminationHandler = { [weak self] proc in
                 progressTask.cancel()
                 stderrHandle?.closeFile()
-                self?.allowSleep()
-                Task { @MainActor in self?.isRunning = false }
-                self?.currentProcess = nil
 
-                // Both .terminate() and user pressing cancel send SIGTERM (uncaughtSignal)
-                // Also check for exit code 255 which ffmpeg uses on SIGTERM
+                // Все MainActor-свойства и методы — через Task @MainActor
+                Task { @MainActor [weak self] in
+                    self?.allowSleep()
+                    self?.isRunning = false
+                    self?.currentProcess = nil
+                }
+
                 let wasCancelled = proc.terminationReason == .uncaughtSignal
                     || proc.terminationStatus == 255
-                    || proc.terminationStatus == 143  // 128 + SIGTERM(15)
+                    || proc.terminationStatus == 143
 
                 if wasCancelled {
                     continuation.resume(throwing: AppError.cancelled)
                     return
                 }
                 if proc.terminationStatus == 0 {
-                    self?.sendCompletionNotification(outputURL: outputURL)
+                    Task { @MainActor [weak self] in
+                        self?.sendCompletionNotification(outputURL: outputURL)
+                    }
                     continuation.resume()
                 } else {
                     let errText = (try? String(contentsOf: stderrFile, encoding: .utf8)) ?? ""
@@ -145,9 +149,7 @@ class FFmpegRunner: ObservableObject {
                         .joined(separator: "\n")
                     let msg = [
                         errLines.isEmpty ? "Код: \(proc.terminationStatus)" : errLines,
-                        "",
-                        "Команда:",
-                        cmdString
+                        "", "Команда:", cmdString
                     ].joined(separator: "\n")
                     continuation.resume(throwing: AppError.encodingFailed(msg))
                 }
