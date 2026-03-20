@@ -1,5 +1,22 @@
 import SwiftUI
 
+struct LanguagePickerCompact: View {
+    @ObservedObject var langMgr = LanguageManager.shared
+
+    var body: some View {
+        Picker("", selection: $langMgr.language) {
+            ForEach(AppLanguage.allCases) { lang in
+                Text(lang.shortCode).tag(lang)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        .fixedSize()
+        .fontDesign(.monospaced)
+        .fontWeight(.semibold)
+    }
+}
+
 struct LanguagePickerView: View {
     @ObservedObject var langMgr = LanguageManager.shared
 
@@ -11,7 +28,6 @@ struct LanguagePickerView: View {
         }
         .labelsHidden()
         .pickerStyle(.menu)
-        // Full width, subdued appearance matching sidebar footer style
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 2)
         .buttonStyle(.plain)
