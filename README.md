@@ -20,7 +20,7 @@ A native macOS video compression app built with SwiftUI and FFmpeg.
 
 ## Requirements
 
-- macOS 13.0 or later
+- macOS 14.0 or later
 - Xcode 15+
 - FFmpeg installed via Homebrew:
 ```bash
